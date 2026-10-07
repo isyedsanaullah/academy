@@ -420,9 +420,11 @@ export default function TablesPractice() {
 
       <div key={animateKey} className="animate-fade-up">
         <QuestionCard
+          question={currentQuestion}
           display={currentQuestion.display}
           questionNumber={currentIndex + 1}
           totalQuestions={questions.length}
+          animateKey={animateKey}
         />
       </div>
 
