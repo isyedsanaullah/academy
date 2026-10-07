@@ -31,14 +31,29 @@ export default function Results() {
     }
   }, [result, navigate]);
 
+  const triggerSendWhatsApp = () => {
+    if (!result) return;
+    const link = getWhatsAppLink(result);
+    // Open in a new window/tab so the student never loses their results tab!
+    const win = window.open(link, '_blank', 'noopener,noreferrer');
+    if (!win) {
+      const a = document.createElement('a');
+      a.href = link;
+      a.target = '_blank';
+      a.rel = 'noopener noreferrer';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    }
+  };
+
   // Automatic WhatsApp redirect timer (5 seconds)
   useEffect(() => {
     if (isTeacherView || !result || autoSent) return;
 
     if (countdown <= 0) {
       setAutoSent(true);
-      const link = getWhatsAppLink(result);
-      window.location.href = link;
+      triggerSendWhatsApp();
       return;
     }
 
@@ -81,32 +96,58 @@ export default function Results() {
     <div className="max-w-lg mx-auto px-4 py-6 space-y-5 animate-fade-up pb-safe">
 
       {/* Auto-WhatsApp Countdown Banner (5 seconds) */}
-      <div className="card p-3.5 bg-emerald-50 border-2 border-emerald-300 text-emerald-950 flex items-center justify-between gap-3 shadow-xs">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-2xl bg-emerald-600 text-white flex items-center justify-center font-black text-lg shrink-0 shadow-xs animate-pulse">
-            {countdown}s
-          </div>
-          <div>
-            <div className="font-black text-sm text-emerald-900 leading-tight">
-              Sending Result to Teacher on WhatsApp...
+      {autoSent ? (
+        <div className="card p-3.5 bg-emerald-50 border-2 border-emerald-300 text-emerald-950 flex items-center justify-between gap-3 shadow-xs">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-2xl bg-emerald-600 text-white flex items-center justify-center font-black text-xl shrink-0">
+              ✓
             </div>
-            <div className="text-xs text-emerald-700 font-medium">
-              Opening WhatsApp automatically in {countdown} seconds
+            <div>
+              <div className="font-black text-sm text-emerald-900 leading-tight">
+                WhatsApp opened for teacher!
+              </div>
+              <div className="text-xs text-emerald-700 font-medium">
+                Message prepared with full teacher result card link
+              </div>
             </div>
           </div>
-        </div>
 
-        <button
-          type="button"
-          onClick={() => {
-            const link = getWhatsAppLink(result);
-            window.location.href = link;
-          }}
-          className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-xs transition-colors shrink-0"
-        >
-          Send Now →
-        </button>
-      </div>
+          <button
+            type="button"
+            onClick={triggerSendWhatsApp}
+            className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-xs transition-colors shrink-0"
+          >
+            Re-open WhatsApp
+          </button>
+        </div>
+      ) : (
+        <div className="card p-3.5 bg-emerald-50 border-2 border-emerald-300 text-emerald-950 flex items-center justify-between gap-3 shadow-xs">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-2xl bg-emerald-600 text-white flex items-center justify-center font-black text-lg shrink-0 shadow-xs animate-pulse">
+              {countdown}s
+            </div>
+            <div>
+              <div className="font-black text-sm text-emerald-900 leading-tight">
+                Sending Result to Teacher on WhatsApp...
+              </div>
+              <div className="text-xs text-emerald-700 font-medium">
+                Opening WhatsApp automatically in {countdown} seconds
+              </div>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => {
+              setAutoSent(true);
+              triggerSendWhatsApp();
+            }}
+            className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-xs transition-colors shrink-0"
+          >
+            Send Now →
+          </button>
+        </div>
+      )}
 
       <div className="text-center space-y-1">
         <div className="text-4xl animate-celebrate inline-block">🎉</div>
