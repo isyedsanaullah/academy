@@ -91,7 +91,16 @@ export default function Results() {
     );
   }
 
-  // ── Student view (after completing game) ──────────────────────────────────
+  const handleNavigateDifficulty = (nextDiff) => {
+    navigate('/practice', {
+      state: {
+        gameType: result.gameType || 'multiplication',
+        tableNum: null,
+        difficultyId: nextDiff,
+      },
+    });
+  };
+
   return (
     <div className="max-w-lg mx-auto px-4 py-6 space-y-5 animate-fade-up pb-safe">
 
@@ -157,7 +166,7 @@ export default function Results() {
         </p>
       </div>
 
-      <ResultSummary result={result} />
+      <ResultSummary result={result} onNavigateDifficulty={handleNavigateDifficulty} />
 
       {/* Share section */}
       <div className="card p-4 space-y-1">

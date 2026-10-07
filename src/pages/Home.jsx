@@ -1,6 +1,15 @@
 import { useNavigate } from 'react-router-dom';
+import { Smile, Zap, Flame, Brain, Trophy } from 'lucide-react';
 import { gameService } from '../services/gameService.js';
 import { DIFFICULTIES } from '../data/tables.js';
+
+const ICON_MAP = {
+  Smile,
+  Zap,
+  Flame,
+  Brain,
+  Trophy,
+};
 
 export default function Home() {
   const navigate = useNavigate();
@@ -120,26 +129,46 @@ export default function Home() {
 
       {/* Best Scores */}
       <div className="space-y-3">
-        <h2 className="text-xs font-bold uppercase tracking-wider text-slate-400 text-center">
-          Your Best Multiplication Scores
-        </h2>
-        <div className="grid grid-cols-3 gap-3">
+        <div className="flex items-center justify-between px-1">
+          <h2 className="text-xs font-bold uppercase tracking-wider text-slate-400">
+            Multiplication Progression Best Scores
+          </h2>
+          <span className="text-[11px] font-bold text-blue-600">5 Tiers</span>
+        </div>
+
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5">
           {Object.values(DIFFICULTIES).map(diff => {
-            const best = bestScores[diff.id] || 0;
+            const IconComp = ICON_MAP[diff.iconName] || Smile;
+            let best = bestScores[diff.id] || 0;
+            if (diff.id === 'easy') {
+              best = Math.max(bestScores.easy_0_5 || 0, bestScores.easy_6_10 || 0, bestScores.easy || 0);
+            }
+
             return (
-              <div key={diff.id} className="card p-3 sm:p-4 text-center space-y-1">
-                <span className="text-xl sm:text-2xl">{diff.emoji}</span>
-                <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+              <div
+                key={diff.id}
+                onClick={() => navigate('/practice', { state: { difficultyId: diff.id } })}
+                className="card p-3 text-center space-y-1.5 hover:border-blue-300 hover:shadow-xs transition-all cursor-pointer"
+              >
+                <div className="flex justify-center">
+                  <div className="w-8 h-8 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-700">
+                    <IconComp className="w-4 h-4 stroke-[2.2]" />
+                  </div>
+                </div>
+                <div className="text-[11px] font-black uppercase tracking-wider text-slate-700">
                   {diff.label}
                 </div>
                 {best > 0 ? (
-                  <div className="text-lg sm:text-xl font-black text-slate-800 tabular-nums">
+                  <div className="text-base sm:text-lg font-black text-slate-900 tabular-nums">
                     {best}
-                    <span className="text-xs font-bold text-slate-400">/{diff.questions}</span>
+                    <span className="text-[11px] font-bold text-slate-400">/{diff.questions}</span>
                   </div>
                 ) : (
-                  <div className="text-sm text-slate-300 font-medium">—</div>
+                  <div className="text-xs text-slate-300 font-medium py-0.5">—</div>
                 )}
+                <div className="text-[10px] text-slate-400 font-medium truncate">
+                  {diff.secondsPerQuestion}s · {diff.questions}Q
+                </div>
               </div>
             );
           })}

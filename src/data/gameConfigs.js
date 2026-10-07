@@ -5,6 +5,8 @@
  * Designed for Class 3 to Class 6 learners.
  */
 
+import { DIFFICULTIES } from './tables.js';
+
 export const GAME_TYPES = {
   multiplication: {
     id: 'multiplication',
@@ -15,38 +17,7 @@ export const GAME_TYPES = {
     description: 'Practice multiplication tables with timed questions.',
     tagline: 'Class 3–6 · Tables & Mental Math',
     accentColor: 'blue',
-    difficulties: {
-      easy: {
-        id: 'easy',
-        label: 'Easy',
-        tagline: 'Tables 0–5 · Beginners',
-        questions: 10,
-        secondsPerQuestion: 10,
-        emoji: '😊',
-        minTable: 0,
-        maxTable: 5,
-      },
-      medium: {
-        id: 'medium',
-        label: 'Medium',
-        tagline: 'Tables 0–10 · Speed & confidence',
-        questions: 15,
-        secondsPerQuestion: 8,
-        emoji: '⚡',
-        minTable: 0,
-        maxTable: 10,
-      },
-      hard: {
-        id: 'hard',
-        label: 'Hard',
-        tagline: 'Tables 0–12 · Master level',
-        questions: 20,
-        secondsPerQuestion: 6,
-        emoji: '🔥',
-        minTable: 0,
-        maxTable: 12,
-      },
-    },
+    difficulties: DIFFICULTIES,
   },
 
   addition: {
