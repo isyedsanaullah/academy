@@ -1,68 +1,139 @@
 import { useNavigate } from 'react-router-dom';
-import { gameService } from '../services/gameService';
-import { DIFFICULTIES } from '../data/tables';
+import { gameService } from '../services/gameService.js';
+import { DIFFICULTIES } from '../data/tables.js';
 
 export default function Home() {
   const navigate = useNavigate();
   const bestScores = gameService.getBestScores();
 
   return (
-    <div className="max-w-lg mx-auto px-4 py-8 space-y-8 animate-fade-up">
+    <div className="max-w-2xl mx-auto px-4 py-6 space-y-8 animate-fade-up pb-12">
 
-      {/* Hero */}
-      <div className="text-center space-y-4 pt-4">
-        <div className="inline-flex items-center justify-center w-20 h-20 bg-brand-600 rounded-3xl text-white text-4xl font-black shadow-lg shadow-brand-200 mb-2">
-          ×
+      {/* Hero Section */}
+      <div className="text-center space-y-4 pt-2">
+        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-blue-50 border border-blue-100 text-blue-700 text-xs font-black uppercase tracking-wider">
+          <span>📍</span>
+          <span>Block B, Soan Gardens, Islamabad, Pakistan</span>
         </div>
-        <h1 className="text-3xl sm:text-4xl font-black text-slate-800 leading-tight tracking-tight">
-          Master Your<br />Multiplication Tables
-        </h1>
-        <p className="text-slate-500 text-base font-medium max-w-xs mx-auto">
-          Practice, improve your speed, and challenge yourself!
+
+        <div className="space-y-1">
+          <h1 className="text-3xl sm:text-5xl font-black text-slate-900 tracking-tight leading-tight">
+            Syeds Academy
+          </h1>
+          <p className="text-lg sm:text-xl font-bold text-blue-600">
+            Math Practice Made Simple
+          </p>
+        </div>
+
+        <p className="text-slate-500 text-sm sm:text-base font-medium max-w-md mx-auto leading-relaxed">
+          Interactive mathematics platform for <strong>Class 3 to Class 6</strong> students.
+          Master multiplication tables, mental speed, and written column arithmetic.
         </p>
 
-        <button
-          type="button"
-          onClick={() => navigate('/practice')}
-          className="btn-primary max-w-xs mx-auto mt-2 shadow-md shadow-brand-200"
-          style={{ borderRadius: '999px', fontSize: '1.125rem' }}
-        >
-          <span>Start Tables Practice</span>
-          <span>→</span>
-        </button>
+        {/* Primary Action Buttons (Part 26) */}
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2 max-w-md mx-auto">
+          <button
+            type="button"
+            onClick={() => navigate('/practice')}
+            className="btn-primary w-full sm:w-auto px-6 py-3.5 text-base font-bold shadow-md shadow-blue-200"
+            style={{ borderRadius: '14px' }}
+          >
+            <span>Practice Math</span>
+            <span>⚡</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => navigate('/tables')}
+            className="btn-secondary w-full sm:w-auto px-6 py-3.5 text-base font-bold"
+            style={{ borderRadius: '14px' }}
+          >
+            <span>Read Tables 1–10</span>
+            <span>📖</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => navigate('/games')}
+            className="px-6 py-3.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-bold text-base w-full sm:w-auto transition-colors shadow-xs"
+            style={{ borderRadius: '14px' }}
+          >
+            <span>Explore Games</span>
+            <span>🎮</span>
+          </button>
+        </div>
       </div>
 
-      {/* Feature pills */}
-      <div className="grid grid-cols-2 gap-3 max-w-xs mx-auto">
-        {[
-          { icon: '📊', text: 'Tables 0–10' },
-          { icon: '⏱', text: 'Timed Questions' },
-          { icon: '🏆', text: '3 Difficulty Levels' },
-          { icon: '📲', text: 'Share with Teacher' },
-        ].map(f => (
-          <div key={f.text} className="card flex items-center gap-2 px-3 py-2.5">
-            <span className="text-xl">{f.icon}</span>
-            <span className="text-xs font-bold text-slate-600">{f.text}</span>
+      {/* Quick Launch Cards */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between px-1">
+          <h2 className="text-xs font-bold uppercase tracking-wider text-slate-400">
+            Featured Practice Activities
+          </h2>
+          <button
+            type="button"
+            onClick={() => navigate('/games')}
+            className="text-xs font-bold text-blue-600 hover:text-blue-700"
+          >
+            View All Games →
+          </button>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div
+            onClick={() => navigate('/tables')}
+            className="card p-4 border border-slate-200 hover:border-blue-300 hover:shadow-md cursor-pointer transition-all space-y-2"
+          >
+            <div className="w-9 h-9 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center font-black text-lg">
+              ×
+            </div>
+            <h3 className="font-black text-slate-800 text-base">Tables 1–10</h3>
+            <p className="text-xs text-slate-500">Read and memorize individual multiplication tables.</p>
+            <span className="inline-block text-xs font-bold text-blue-600">Read & Practice →</span>
           </div>
-        ))}
+
+          <div
+            onClick={() => navigate('/games')}
+            className="card p-4 border border-slate-200 hover:border-emerald-300 hover:shadow-md cursor-pointer transition-all space-y-2"
+          >
+            <div className="w-9 h-9 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center font-black text-lg">
+              +
+            </div>
+            <h3 className="font-black text-slate-800 text-base">Arithmetic Quizzes</h3>
+            <p className="text-xs text-slate-500">Timed challenges for Addition, Subtraction & Division.</p>
+            <span className="inline-block text-xs font-bold text-emerald-600">Play Quizzes →</span>
+          </div>
+
+          <div
+            onClick={() => navigate('/written-math')}
+            className="card p-4 border border-slate-200 hover:border-indigo-300 hover:shadow-md cursor-pointer transition-all space-y-2"
+          >
+            <div className="w-9 h-9 rounded-xl bg-indigo-100 text-indigo-700 flex items-center justify-center font-black text-lg">
+              📝
+            </div>
+            <h3 className="font-black text-slate-800 text-base">Written Math</h3>
+            <p className="text-xs text-slate-500">School notebook vertical column arithmetic with carries.</p>
+            <span className="inline-block text-xs font-bold text-indigo-600">Open Notebook →</span>
+          </div>
+        </div>
       </div>
 
       {/* Best Scores */}
       <div className="space-y-3">
-        <h2 className="text-sm font-bold uppercase tracking-wider text-slate-400 text-center">
-          Your Best Scores
+        <h2 className="text-xs font-bold uppercase tracking-wider text-slate-400 text-center">
+          Your Best Multiplication Scores
         </h2>
         <div className="grid grid-cols-3 gap-3">
           {Object.values(DIFFICULTIES).map(diff => {
             const best = bestScores[diff.id] || 0;
             return (
-              <div key={diff.id} className="card p-4 text-center space-y-1">
-                <span className="text-2xl">{diff.emoji}</span>
-                <div className="text-xs font-bold uppercase tracking-wider text-slate-400">
+              <div key={diff.id} className="card p-3 sm:p-4 text-center space-y-1">
+                <span className="text-xl sm:text-2xl">{diff.emoji}</span>
+                <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
                   {diff.label}
                 </div>
                 {best > 0 ? (
-                  <div className="text-xl font-black text-slate-800 tabular-nums">
+                  <div className="text-lg sm:text-xl font-black text-slate-800 tabular-nums">
                     {best}
                     <span className="text-xs font-bold text-slate-400">/{diff.questions}</span>
                   </div>
@@ -75,11 +146,17 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Coming soon */}
-      <div className="card p-4 bg-slate-50 border-dashed border-slate-200 text-center">
-        <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Coming Soon</p>
-        <p className="text-sm text-slate-500 font-medium mt-1">
-          Addition · Subtraction · Fractions · Mental Math
+      {/* Curriculum Banner */}
+      <div className="card p-5 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 space-y-2">
+        <div className="flex items-center gap-2">
+          <span className="text-lg">🏫</span>
+          <h3 className="font-black text-slate-800 text-sm sm:text-base">
+            Class 3 to Class 6 Curriculum
+          </h3>
+        </div>
+        <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
+          Syeds Academy provides foundational numeracy practice for primary school students in Islamabad.
+          Reinforce mental speed, practice daily, and share verified progress cards with teachers.
         </p>
       </div>
 

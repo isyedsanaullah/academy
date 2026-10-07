@@ -1,17 +1,18 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 
-import { DIFFICULTIES } from '../data/tables';
-import { generateQuestions } from '../utils/questionGenerator';
-import { calculateScore } from '../utils/scoreCalculator';
-import { gameService } from '../services/gameService';
+import { DIFFICULTIES } from '../data/tables.js';
+import { GAME_TYPES } from '../data/gameConfigs.js';
+import { generateQuestions } from '../utils/questionGenerator.js';
+import { calculateScore } from '../utils/scoreCalculator.js';
+import { gameService } from '../services/gameService.js';
 
-import DifficultyCard from '../components/DifficultyCard';
-import Timer from '../components/Timer';
-import ProgressBar from '../components/ProgressBar';
-import QuestionCard from '../components/QuestionCard';
-import AnswerOption from '../components/AnswerOption';
-import ScoreCard from '../components/ScoreCard';
+import DifficultyCard from '../components/DifficultyCard.jsx';
+import Timer from '../components/Timer.jsx';
+import ProgressBar from '../components/ProgressBar.jsx';
+import QuestionCard from '../components/QuestionCard.jsx';
+import AnswerOption from '../components/AnswerOption.jsx';
+import ScoreCard from '../components/ScoreCard.jsx';
 
 // ── Game phases ────────────────────────────────────────────────────────────
 const PHASE = {
@@ -23,10 +24,16 @@ const PHASE = {
 export default function TablesPractice() {
   const navigate   = useNavigate();
   const location   = useLocation();
+
+  const gameType = location.state?.gameType || 'multiplication';
+  const tableNum = location.state?.tableNum != null ? Number(location.state.tableNum) : null;
+  const gameDef = GAME_TYPES[gameType] || GAME_TYPES.multiplication;
+  const gameTitle = tableNum != null ? `Table ${tableNum} Practice` : gameDef.title;
+
   const bestScores = gameService.getBestScores();
 
   // ── Setup state ─────────────────────────────────────────────────────────
-  const [phase,      setPhase]      = useState(PHASE.SETUP);
+  const [phase,      setPhase]      = useState(tableNum != null ? PHASE.INSTRUCTIONS : PHASE.SETUP);
   const [studentName, setStudentName] = useState(gameService.getStudentName);
   const [difficulty,  setDifficulty]  = useState(
     () => location.state?.difficultyId || gameService.getLastDifficulty()
@@ -42,10 +49,10 @@ export default function TablesPractice() {
 
   // ── Interaction state ────────────────────────────────────────────────────
   const [isLocked,    setIsLocked]    = useState(false);
-  const [feedback,    setFeedback]    = useState(null); // { status, selectedValue, correctValue }
+  const [feedback,    setFeedback]    = useState(null);
   const [animateKey,  setAnimateKey]  = useState(0);
 
-  // ── Refs for stable callbacks (no stale closure issues) ──────────────────
+  // ── Refs for stable callbacks ────────────────────────────────────────────
   const isLockedRef       = useRef(false);
   const currentIndexRef   = useRef(0);
   const questionsRef      = useRef([]);
@@ -55,21 +62,36 @@ export default function TablesPractice() {
   const scoreRef          = useRef(0);
   const difficultyRef     = useRef(difficulty);
 
-  // Sync refs to state
   useEffect(() => { currentIndexRef.current = currentIndex; }, [currentIndex]);
   useEffect(() => { questionsRef.current    = questions;    }, [questions]);
   useEffect(() => { answersRef.current      = answers;      }, [answers]);
   useEffect(() => { difficultyRef.current   = difficulty;   }, [difficulty]);
 
-  // Direct-start from "Try Again" button on results page
+  const getActiveConfig = useCallback(() => {
+    if (tableNum != null) {
+      return {
+        id: 'focus',
+        label: `Table ${tableNum}`,
+        emoji: '🎯',
+        tagline: `Focused practice on the ×${tableNum} table`,
+        questions: 11,
+        secondsPerQuestion: 8,
+        minTable: tableNum,
+        maxTable: tableNum,
+        colorClass: 'blue',
+      };
+    }
+    const diffMap = gameDef.difficulties || DIFFICULTIES;
+    return diffMap[difficulty] || DIFFICULTIES[difficulty] || DIFFICULTIES.medium;
+  }, [tableNum, gameDef, difficulty]);
+
+  // Direct-start from "Try Again"
   useEffect(() => {
     if (location.state?.directStart) {
       startGame();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  // ── Handlers ─────────────────────────────────────────────────────────────
 
   const handleDifficultySelect = (id) => {
     setDifficulty(id);
@@ -82,10 +104,12 @@ export default function TablesPractice() {
   };
 
   const startGame = useCallback(() => {
-    const config = DIFFICULTIES[difficultyRef.current];
-    const generated = generateQuestions(config);
+    const generated = generateQuestions({
+      gameType,
+      difficultyId: difficultyRef.current,
+      tableNum,
+    });
 
-    // Reset all game state
     setQuestions(generated);
     questionsRef.current = generated;
     setCurrentIndex(0);
@@ -103,9 +127,8 @@ export default function TablesPractice() {
     setFeedback(null);
     setAnimateKey(0);
     setPhase(PHASE.PLAYING);
-  }, []);
+  }, [gameType, tableNum]);
 
-  /** Shared logic after any answer (correct / incorrect / timeout) */
   const processAnswer = useCallback((selectedValue, status) => {
     const idx      = currentIndexRef.current;
     const question = questionsRef.current[idx];
@@ -118,41 +141,43 @@ export default function TablesPractice() {
       status,
     };
 
-    const newAnswers = [...answersRef.current, newAnswer];
-    answersRef.current = newAnswers;
-    setAnswers(newAnswers);
+    const nextAnswers = [...answersRef.current, newAnswer];
+    answersRef.current = nextAnswers;
+    setAnswers(nextAnswers);
 
-    // Update live counters
     if (status === 'correct') {
-      scoreRef.current++;
-      correctCountRef.current++;
-      setScore(scoreRef.current);
-      setCorrectCount(correctCountRef.current);
+      const nextCorrect = correctCountRef.current + 1;
+      correctCountRef.current = nextCorrect;
+      setCorrectCount(nextCorrect);
+      const nextScore = scoreRef.current + 1;
+      scoreRef.current = nextScore;
+      setScore(nextScore);
     } else {
-      incorrectCountRef.current++;
-      setIncorrectCount(incorrectCountRef.current);
+      const nextInc = incorrectCountRef.current + 1;
+      incorrectCountRef.current = nextInc;
+      setIncorrectCount(nextInc);
     }
 
-    // Show feedback, then advance
-    const delay = status === 'correct' ? 700 : 1600;
+    const nextIdx = idx + 1;
+    const totalQ  = questionsRef.current.length;
+
     setTimeout(() => {
-      const nextIdx = idx + 1;
-      if (nextIdx < questionsRef.current.length) {
+      if (nextIdx >= totalQ) {
+        finishGame(nextAnswers);
+      } else {
         currentIndexRef.current = nextIdx;
-        isLockedRef.current = false;
         setCurrentIndex(nextIdx);
         setFeedback(null);
-        setIsLocked(false);
         setAnimateKey(k => k + 1);
-      } else {
-        finishGame(newAnswers);
+        isLockedRef.current = false;
+        setIsLocked(false);
       }
-    }, delay);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, 900);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const handleAnswer = useCallback((value) => {
-    if (isLockedRef.current) return;  // immediate guard before re-render
+  const handleOptionSelect = useCallback((value) => {
+    if (isLockedRef.current) return;
     isLockedRef.current = true;
     setIsLocked(true);
 
@@ -175,30 +200,41 @@ export default function TablesPractice() {
   }, [processAnswer]);
 
   const finishGame = (finalAnswers) => {
-    const config = DIFFICULTIES[difficultyRef.current];
+    const activeCfg = getActiveConfig();
     const calcResult = calculateScore(finalAnswers);
 
     const finalResult = {
       ...calcResult,
+      gameType,
+      gameTitle,
+      tableNum,
       studentName: studentName || 'Student',
-      difficultyId:    difficultyRef.current,
-      difficultyLabel: config.label,
-      tableRange:      `${config.minTable}–${config.maxTable}`,
-      answers:         finalAnswers,
+      difficultyId: difficultyRef.current,
+      difficultyLabel: activeCfg.label,
+      tableRange: tableNum ? `×${tableNum}` : (activeCfg.minTable != null ? `${activeCfg.minTable}–${activeCfg.maxTable}` : ''),
+      answers: finalAnswers,
     };
 
     gameService.saveResult(finalResult);
     navigate('/results', { state: { result: finalResult }, replace: true });
   };
 
-
   // ──────────────────────────────────────────────────────────────────────────
   // RENDER: SETUP
   // ──────────────────────────────────────────────────────────────────────────
   if (phase === PHASE.SETUP) {
+    const diffList = Object.values(gameDef.difficulties || DIFFICULTIES);
+
     return (
       <div className="max-w-lg mx-auto px-4 py-6 space-y-6 animate-fade-up">
-        <h1 className="text-2xl font-black text-slate-800 text-center tracking-tight">Game Setup</h1>
+        <div className="text-center space-y-1">
+          <span className="text-xs font-bold uppercase tracking-wider text-blue-600">
+            {gameDef.tagline || 'Challenge Setup'}
+          </span>
+          <h1 className="text-2xl font-black text-slate-800 tracking-tight">
+            {gameTitle}
+          </h1>
+        </div>
 
         {/* Name input */}
         <div className="card p-4 space-y-2">
@@ -212,10 +248,10 @@ export default function TablesPractice() {
             placeholder="Enter your name"
             value={studentName}
             onChange={handleNameChange}
-            className="w-full px-4 py-3.5 bg-slate-50 border-2 border-slate-100 rounded-2xl text-lg font-bold text-slate-700 outline-none focus:border-brand-400 focus:bg-white transition-colors"
+            className="w-full px-4 py-3 bg-slate-50 border-2 border-slate-100 rounded-xl text-base font-bold text-slate-700 outline-none focus:border-blue-400 focus:bg-white transition-colors"
             autoComplete="off"
           />
-          <p className="text-xs text-slate-400">Your name will appear in the result shared with your teacher.</p>
+          <p className="text-xs text-slate-400">Your name will appear when you share your score with your teacher.</p>
         </div>
 
         {/* Difficulty selection */}
@@ -224,7 +260,7 @@ export default function TablesPractice() {
             Choose Difficulty
           </p>
           <div className="space-y-3">
-            {Object.values(DIFFICULTIES).map(diff => (
+            {diffList.map(diff => (
               <DifficultyCard
                 key={diff.id}
                 difficulty={diff}
@@ -252,19 +288,18 @@ export default function TablesPractice() {
   // RENDER: INSTRUCTIONS
   // ──────────────────────────────────────────────────────────────────────────
   if (phase === PHASE.INSTRUCTIONS) {
-    const cfg = DIFFICULTIES[difficulty];
+    const cfg = getActiveConfig();
+
     return (
       <div className="max-w-sm mx-auto px-4 py-8 animate-zoom-in">
         <div className="card overflow-hidden">
-          {/* Header strip */}
           <div className="bg-slate-800 p-6 text-center">
-            <div className="text-4xl mb-2">{cfg.emoji}</div>
-            <h2 className="text-2xl font-black text-white">{cfg.label} Mode</h2>
-            <p className="text-slate-400 text-sm mt-1">Tables {cfg.minTable}–{cfg.maxTable}</p>
+            <div className="text-4xl mb-2">{cfg.emoji || '🎯'}</div>
+            <h2 className="text-2xl font-black text-white">{gameTitle}</h2>
+            <p className="text-slate-400 text-sm mt-1">{cfg.label} · {cfg.tagline}</p>
           </div>
 
           <div className="p-6 space-y-6">
-            {/* Stats */}
             <div className="grid grid-cols-3 gap-3 text-center">
               {[
                 { label: 'Questions', value: cfg.questions },
@@ -272,22 +307,20 @@ export default function TablesPractice() {
                 { label: 'Options',   value: 4 },
               ].map(s => (
                 <div key={s.label} className="bg-slate-50 rounded-2xl p-3">
-                  <div className="text-3xl font-black text-brand-600 tabular-nums">{s.value}</div>
+                  <div className="text-2xl font-black text-blue-600 tabular-nums">{s.value}</div>
                   <div className="text-xs font-bold text-slate-400 mt-0.5">{s.label}</div>
                 </div>
               ))}
             </div>
 
-            {/* Instructions */}
-            <ul className="space-y-3">
+            <ul className="space-y-2.5">
               {[
-                'Pick the correct answer from 4 choices.',
-                'Answer before the timer runs out.',
-                'Missed questions count as wrong.',
-                'Try to beat your best score!',
+                'Choose the correct answer from 4 choices.',
+                'Answer before the countdown timer expires.',
+                'Try to get 100% accuracy to earn full stars!',
               ].map((tip, i) => (
-                <li key={i} className="flex gap-3 items-start text-sm text-slate-600">
-                  <span className="flex-shrink-0 w-6 h-6 rounded-full bg-brand-100 text-brand-700 font-black text-xs flex items-center justify-center">
+                <li key={i} className="flex gap-2.5 items-start text-xs sm:text-sm text-slate-600">
+                  <span className="flex-shrink-0 w-5 h-5 rounded-full bg-blue-100 text-blue-700 font-bold text-xs flex items-center justify-center">
                     {i + 1}
                   </span>
                   {tip}
@@ -296,16 +329,18 @@ export default function TablesPractice() {
             </ul>
 
             <button type="button" onClick={startGame} className="btn-primary">
-              🚀 Start Game
+              🚀 Start Challenge
             </button>
 
-            <button
-              type="button"
-              onClick={() => setPhase(PHASE.SETUP)}
-              className="btn-secondary"
-            >
-              ← Back
-            </button>
+            {tableNum == null && (
+              <button
+                type="button"
+                onClick={() => setPhase(PHASE.SETUP)}
+                className="btn-secondary"
+              >
+                ← Back
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -316,11 +351,10 @@ export default function TablesPractice() {
   // RENDER: PLAYING
   // ──────────────────────────────────────────────────────────────────────────
   const currentQuestion = questions[currentIndex];
-  const cfg = DIFFICULTIES[difficulty];
+  const activeCfg = getActiveConfig();
 
-  if (!currentQuestion) return null; // Safety guard
+  if (!currentQuestion) return null;
 
-  // Compute each option's visual state
   const getOptionState = (opt) => {
     if (!feedback) return 'default';
     if (opt === feedback.correctValue) return 'correct';
@@ -328,29 +362,28 @@ export default function TablesPractice() {
     return 'dimmed';
   };
 
-  // Feedback banner
   const FeedbackBanner = () => {
     if (!feedback) return null;
     if (feedback.status === 'correct') {
       return (
         <div className="text-center animate-zoom-in">
-          <div className="text-2xl font-black text-emerald-500">✅ Correct!</div>
+          <div className="text-xl sm:text-2xl font-black text-emerald-500">✅ Correct!</div>
         </div>
       );
     }
     if (feedback.status === 'incorrect') {
       return (
         <div className="text-center animate-zoom-in">
-          <div className="text-lg font-black text-rose-500">Not quite!</div>
-          <div className="text-sm text-slate-500">Correct answer: <strong>{feedback.correctValue}</strong></div>
+          <div className="text-base sm:text-lg font-black text-rose-500">Not quite!</div>
+          <div className="text-xs sm:text-sm text-slate-500">Correct answer: <strong>{feedback.correctValue}</strong></div>
         </div>
       );
     }
     if (feedback.status === 'timeout') {
       return (
         <div className="text-center animate-zoom-in">
-          <div className="text-lg font-black text-amber-500">⏱ Time's Up!</div>
-          <div className="text-sm text-slate-500">Correct answer: <strong>{feedback.correctValue}</strong></div>
+          <div className="text-base sm:text-lg font-black text-amber-500">⏰ Time Up!</div>
+          <div className="text-xs sm:text-sm text-slate-500">Correct answer: <strong>{feedback.correctValue}</strong></div>
         </div>
       );
     }
@@ -358,47 +391,52 @@ export default function TablesPractice() {
   };
 
   return (
-    <div className="game-screen max-w-lg mx-auto px-4 py-4 flex flex-col gap-4">
-
-      {/* Top bar: progress + score */}
-      <div className="flex items-center gap-3">
-        <div className="flex-1">
-          <ProgressBar current={currentIndex + 1} total={questions.length} />
-        </div>
-        <ScoreCard score={score} correct={correctCount} incorrect={incorrectCount} />
-      </div>
-
-      {/* Timer + feedback area — fixed height to avoid layout shift */}
-      <div className="flex flex-col items-center justify-center h-20 gap-1">
-        {!feedback ? (
-          <Timer
-            key={`timer-${currentQuestion.id}`}
-            totalSeconds={cfg.secondsPerQuestion}
-            isActive={!isLocked}
-            onTimeout={handleTimeout}
-            resetKey={currentQuestion.id}
+    <div className="max-w-lg mx-auto px-4 py-4 space-y-4 pb-safe animate-fade-in">
+      <div className="card p-3 sm:p-4 space-y-3">
+        <div className="flex items-center justify-between">
+          <ScoreCard
+            score={score}
+            correctCount={correctCount}
+            incorrectCount={incorrectCount}
+            totalQuestions={questions.length}
           />
-        ) : (
-          <FeedbackBanner />
-        )}
+          <Timer
+            duration={activeCfg.secondsPerQuestion}
+            onTimeout={handleTimeout}
+            isPaused={isLocked}
+            resetKey={animateKey}
+          />
+        </div>
+
+        <ProgressBar
+          current={currentIndex}
+          total={questions.length}
+        />
       </div>
 
-      {/* Question */}
-      <QuestionCard question={currentQuestion} animateKey={animateKey} />
+      <div className="min-h-[56px] flex items-center justify-center">
+        <FeedbackBanner />
+      </div>
 
-      {/* Answer options: 2×2 grid */}
-      <div className="grid grid-cols-2 gap-3 flex-1">
+      <div key={animateKey} className="animate-fade-up">
+        <QuestionCard
+          display={currentQuestion.display}
+          questionNumber={currentIndex + 1}
+          totalQuestions={questions.length}
+        />
+      </div>
+
+      <div className="grid grid-cols-2 gap-3 pt-1">
         {currentQuestion.options.map((opt, i) => (
           <AnswerOption
-            key={`${currentQuestion.id}-${i}`}
+            key={`${animateKey}-${opt}-${i}`}
             value={opt}
             state={getOptionState(opt)}
+            onClick={handleOptionSelect}
             disabled={isLocked}
-            onClick={handleAnswer}
           />
         ))}
       </div>
-
     </div>
   );
 }

@@ -1,15 +1,8 @@
-import { SCORING_RULES, getFeedback } from '../data/tables';
+import { SCORING_RULES, getFeedback } from '../data/tables.js';
 
 /**
  * Calculate final score and stats from an array of answer records.
- *
- * Each answer record shape:
- * {
- *   questionObj:    { display, multiplier, multiplicand, answer, ... },
- *   expectedAnswer: number,
- *   selectedAnswer: number | null,
- *   status:         'correct' | 'incorrect' | 'timeout',
- * }
+ * Works seamlessly across Multiplication, Addition, Subtraction, and Division games.
  */
 export function calculateScore(answers) {
   let score = 0;
@@ -17,29 +10,33 @@ export function calculateScore(answers) {
   let incorrect = 0;
   let timeout = 0;
 
-  // Track mistake count per table number (both operands)
+  // Track mistake count per table number (for multiplication)
   const mistakeMap = {};
+  const weakQuestions = [];
 
   answers.forEach(ans => {
-    switch (ans.status) {
-      case 'correct':
-        score += SCORING_RULES.correct;
-        correct++;
-        break;
-      case 'incorrect':
-        score += SCORING_RULES.incorrect;
-        incorrect++;
+    const isMistake = ans.status === 'incorrect' || ans.status === 'timeout';
+
+    if (ans.status === 'correct') {
+      score += SCORING_RULES.correct;
+      correct++;
+    } else if (ans.status === 'incorrect') {
+      score += SCORING_RULES.incorrect;
+      incorrect++;
+    } else if (ans.status === 'timeout') {
+      score += SCORING_RULES.timeout;
+      timeout++;
+    }
+
+    if (isMistake && ans.questionObj) {
+      weakQuestions.push(ans.questionObj.display);
+
+      if (ans.questionObj.multiplier != null) {
         recordMistake(mistakeMap, ans.questionObj.multiplier);
+      }
+      if (ans.questionObj.multiplicand != null) {
         recordMistake(mistakeMap, ans.questionObj.multiplicand);
-        break;
-      case 'timeout':
-        score += SCORING_RULES.timeout;
-        timeout++;
-        recordMistake(mistakeMap, ans.questionObj.multiplier);
-        recordMistake(mistakeMap, ans.questionObj.multiplicand);
-        break;
-      default:
-        break;
+      }
     }
   });
 
@@ -48,14 +45,13 @@ export function calculateScore(answers) {
     ? 0
     : Math.round((correct / totalQuestions) * 100);
 
-  // Detect weak tables: top 3 table numbers with most mistakes
-  // Exclude 0 (trivial) and 1 (trivial) unless everything is weak
+  // Detect weak tables (for multiplication games)
   let weakTables = Object.entries(mistakeMap)
+    .filter(([table]) => table !== 'undefined' && table !== 'null')
     .map(([table, count]) => ({ table: Number(table), count }))
     .sort((a, b) => b.count - a.count)
     .map(e => e.table);
 
-  // Filter out 0 and 1 if there are other tables to show
   const significantWeak = weakTables.filter(t => t > 1);
   weakTables = significantWeak.length > 0 ? significantWeak.slice(0, 3) : weakTables.slice(0, 3);
 
@@ -69,10 +65,13 @@ export function calculateScore(answers) {
     timeout,
     accuracy,
     weakTables,
+    weakQuestions: weakQuestions.slice(0, 4),
     feedback,
   };
 }
 
 function recordMistake(map, tableNum) {
-  map[tableNum] = (map[tableNum] ?? 0) + 1;
+  if (tableNum != null) {
+    map[tableNum] = (map[tableNum] ?? 0) + 1;
+  }
 }

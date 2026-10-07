@@ -103,8 +103,9 @@ export function getShareURL(result) {
 // ─── Format readable WhatsApp message ─────────────────────────────────────
 export function formatWhatsAppMessage(result) {
   const student = result.studentName?.trim() || 'Student';
+  const gameTitle = result.gameTitle || (result.tableNum ? `Table ${result.tableNum} Practice` : 'Multiplication');
   const difficulty = result.difficultyLabel || 'Medium';
-  const tables = result.tableRange ? `Tables: ${result.tableRange}` : 'Tables: 0–10';
+  const tables = result.tableRange ? `Tables: ${result.tableRange}` : '';
   const score = result.score ?? 0;
   const total = result.totalQuestions ?? 0;
   const accuracy = result.accuracy ?? (total > 0 ? Math.round((score / total) * 100) : 0);
@@ -112,33 +113,36 @@ export function formatWhatsAppMessage(result) {
   const incorrect = result.incorrect ?? 0;
   const timeouts = result.timeout ?? 0;
 
-  // Format weak tables
-  let weakTablesText = 'None';
+  // Weak tables/topics (if available)
+  let weakText = '';
   if (Array.isArray(result.weakTables) && result.weakTables.length > 0) {
-    weakTablesText = result.weakTables.map(t => `×${t}`).join(', ');
+    weakText = `Weak Tables:\n${result.weakTables.map(t => `×${t}`).join(', ')}\n\n`;
   }
 
-  const prodAppUrl = APP_URL;
-  const fullResultUrl = getShareURL(result);
+  // Choose the safest real public route
+  const appBaseUrl = APP_URL;
+  const practiceLink = result.tableNum
+    ? `${appBaseUrl}/tables`
+    : appBaseUrl;
 
-  return (
-    `📚 Syeds Academy — Math Practice Result\n\n` +
-    `Student: ${student}\n\n` +
-    `Game: Multiplication Tables\n` +
-    `Difficulty: ${difficulty}\n` +
-    `${tables}\n\n` +
-    `Score: ${score}/${total}\n` +
-    `Accuracy: ${accuracy}%\n\n` +
-    `Correct: ${correct}\n` +
-    `Incorrect: ${incorrect}\n` +
-    `Time Outs: ${timeouts}\n\n` +
-    `Weak Tables:\n` +
-    `${weakTablesText}\n\n` +
-    `Full Result Card:\n` +
-    `${fullResultUrl}\n\n` +
-    `Practice again:\n` +
-    `${prodAppUrl}`
-  );
+  const lines = [
+    `📚 Syeds Academy — Math Practice\n`,
+    `Student: ${student}\n`,
+    `Game: ${gameTitle}`,
+    `Difficulty: ${difficulty}`,
+    tables ? tables : null,
+    ``,
+    `Score: ${score}/${total}`,
+    `Accuracy: ${accuracy}%\n`,
+    `Correct: ${correct}`,
+    `Incorrect: ${incorrect}`,
+    `Time Outs: ${timeouts}\n`,
+    weakText ? weakText.trimEnd() + '\n' : null,
+    `Practice:`,
+    `${practiceLink}`
+  ].filter(line => line !== null);
+
+  return lines.join('\n');
 }
 
 // ─── Build WhatsApp link → direct to teacher ──────────────────────────────

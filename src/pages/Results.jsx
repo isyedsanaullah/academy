@@ -62,7 +62,7 @@ export default function Results() {
         <div className="text-4xl animate-celebrate inline-block">🎉</div>
         <h1 className="text-2xl font-black text-slate-800 tracking-tight">Practice Complete!</h1>
         <p className="text-sm text-slate-500">
-          {result.difficultyLabel} · Tables {result.tableRange}
+          {result.gameTitle || 'Math Challenge'} · {result.difficultyLabel} {result.tableRange ? `(${result.tableRange})` : ''}
         </p>
       </div>
 
@@ -82,7 +82,12 @@ export default function Results() {
           type="button"
           onClick={() =>
             navigate('/practice', {
-              state: { difficultyId: result.difficultyId, directStart: true },
+              state: {
+                gameType: result.gameType,
+                tableNum: result.tableNum,
+                difficultyId: result.difficultyId,
+                directStart: true,
+              },
             })
           }
           className="btn-secondary"
@@ -91,10 +96,10 @@ export default function Results() {
         </button>
         <button
           type="button"
-          onClick={() => navigate('/practice')}
+          onClick={() => navigate('/games')}
           className="btn-secondary"
         >
-          ⚙️ Change Mode
+          ⚙️ Math Games
         </button>
       </div>
 
