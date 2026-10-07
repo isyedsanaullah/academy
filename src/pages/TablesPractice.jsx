@@ -366,24 +366,35 @@ export default function TablesPractice() {
     if (!feedback) return null;
     if (feedback.status === 'correct') {
       return (
-        <div className="text-center animate-zoom-in">
-          <div className="text-xl sm:text-2xl font-black text-emerald-500">✅ Correct!</div>
+        <div className="flex items-center justify-center gap-2 text-2xl font-black text-emerald-600 animate-zoom-in">
+          <span className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600 text-lg">✓</span>
+          <span>Correct!</span>
         </div>
       );
     }
     if (feedback.status === 'incorrect') {
       return (
-        <div className="text-center animate-zoom-in">
-          <div className="text-base sm:text-lg font-black text-rose-500">Not quite!</div>
-          <div className="text-xs sm:text-sm text-slate-500">Correct answer: <strong>{feedback.correctValue}</strong></div>
+        <div className="text-center animate-zoom-in space-y-0.5">
+          <div className="flex items-center justify-center gap-2 text-xl font-black text-rose-600">
+            <span className="w-7 h-7 rounded-full bg-rose-100 flex items-center justify-center text-rose-600 text-base">✗</span>
+            <span>Incorrect!</span>
+          </div>
+          <div className="text-xs sm:text-sm font-bold text-slate-500">
+            Correct answer is: <strong className="text-slate-800 text-base">{feedback.correctValue}</strong>
+          </div>
         </div>
       );
     }
     if (feedback.status === 'timeout') {
       return (
-        <div className="text-center animate-zoom-in">
-          <div className="text-base sm:text-lg font-black text-amber-500">⏰ Time Up!</div>
-          <div className="text-xs sm:text-sm text-slate-500">Correct answer: <strong>{feedback.correctValue}</strong></div>
+        <div className="text-center animate-zoom-in space-y-0.5">
+          <div className="flex items-center justify-center gap-2 text-xl font-black text-amber-600">
+            <span>⏰</span>
+            <span>Time's Up! ✗</span>
+          </div>
+          <div className="text-xs sm:text-sm font-bold text-slate-500">
+            Correct answer is: <strong className="text-slate-800 text-base">{feedback.correctValue}</strong>
+          </div>
         </div>
       );
     }
@@ -392,6 +403,18 @@ export default function TablesPractice() {
 
   return (
     <div className="max-w-lg mx-auto px-4 py-4 space-y-4 pb-safe animate-fade-in">
+      {tableNum != null && (
+        <div className="bg-blue-600 text-white px-4 py-2.5 rounded-2xl flex items-center justify-between shadow-xs">
+          <div className="flex items-center gap-2">
+            <span className="text-lg">🎯</span>
+            <span className="text-sm font-black tracking-tight">Table {tableNum} Times Table Practice</span>
+          </div>
+          <span className="text-xs font-bold bg-blue-500 px-2 py-0.5 rounded-lg">
+            ×{tableNum} facts
+          </span>
+        </div>
+      )}
+
       <div className="card p-3 sm:p-4 space-y-3">
         <div className="flex items-center justify-between">
           <ScoreCard
@@ -401,9 +424,11 @@ export default function TablesPractice() {
             totalQuestions={questions.length}
           />
           <Timer
+            totalSeconds={activeCfg.secondsPerQuestion}
             duration={activeCfg.secondsPerQuestion}
-            onTimeout={handleTimeout}
+            isActive={!isLocked}
             isPaused={isLocked}
+            onTimeout={handleTimeout}
             resetKey={animateKey}
           />
         </div>

@@ -1,33 +1,43 @@
 import { useState, useEffect, useRef } from 'react';
 
 /**
- * Timer — stable interval-based countdown with double-fire guard.
+ * Timer — Countdown timer for MCQ quizzes.
  *
- * Props:
- *   totalSeconds  — how long each question gets
- *   isActive      — false when answer is locked; stops the interval
- *   onTimeout     — called exactly once when time reaches 0
- *   resetKey      — change this to reset the timer (use question id or index)
+ * Supports both prop styles:
+ *   totalSeconds / duration
+ *   isActive / isPaused
  */
-export default function Timer({ totalSeconds, isActive, onTimeout, resetKey }) {
-  const [timeLeft, setTimeLeft] = useState(totalSeconds);
-  const firedRef    = useRef(false);  // prevent double-fire
+export default function Timer({
+  totalSeconds,
+  duration,
+  isActive,
+  isPaused,
+  onTimeout,
+  resetKey,
+}) {
+  const initialSeconds = Number(duration || totalSeconds) || 8;
+  const [timeLeft, setTimeLeft] = useState(initialSeconds);
+  const firedRef = useRef(false);
   const onTimeoutRef = useRef(onTimeout);
 
-  // Keep callback ref current without re-running effect
+  // Keep callback ref updated
   useEffect(() => {
     onTimeoutRef.current = onTimeout;
   });
 
-  // Reset when question changes
-  useEffect(() => {
-    setTimeLeft(totalSeconds);
-    firedRef.current = false;
-  }, [resetKey, totalSeconds]);
+  // Determine active running state
+  const isRunning =
+    isActive !== undefined ? Boolean(isActive) : isPaused !== undefined ? !isPaused : true;
 
-  // Countdown interval
+  // Reset when question / resetKey changes or when duration changes
   useEffect(() => {
-    if (!isActive) return; // paused — don't start interval
+    setTimeLeft(initialSeconds);
+    firedRef.current = false;
+  }, [resetKey, initialSeconds]);
+
+  // Interval countdown
+  useEffect(() => {
+    if (!isRunning) return;
 
     const interval = setInterval(() => {
       setTimeLeft(prev => {
@@ -35,8 +45,9 @@ export default function Timer({ totalSeconds, isActive, onTimeout, resetKey }) {
           clearInterval(interval);
           if (!firedRef.current) {
             firedRef.current = true;
-            // Defer so state settles before parent state changes
-            setTimeout(() => onTimeoutRef.current(), 0);
+            setTimeout(() => {
+              if (onTimeoutRef.current) onTimeoutRef.current();
+            }, 0);
           }
           return 0;
         }
@@ -44,53 +55,59 @@ export default function Timer({ totalSeconds, isActive, onTimeout, resetKey }) {
       });
     }, 1000);
 
-    return () => clearInterval(interval); // cleanup on isActive change or unmount
-  }, [isActive, resetKey]); // resetKey restarts the interval for the new question
+    return () => clearInterval(interval);
+  }, [isRunning, resetKey]);
 
-  // ── Visual ──────────────────────────────────────────────────────────────
-  const pct = totalSeconds > 0 ? (timeLeft / totalSeconds) * 100 : 0;
-  const radius = 26;
-  const circumference = 2 * Math.PI * radius; // ~163
+  // Visual percentages & ring calculation
+  const pct = initialSeconds > 0 ? (timeLeft / initialSeconds) * 100 : 0;
+  const radius = 24;
+  const circumference = 2 * Math.PI * radius; // ~150.8
   const dashOffset = circumference - (pct / 100) * circumference;
 
-  let ringColor = '#3b82f6';   // blue — plenty of time
+  let ringColor = '#3b82f6'; // blue
   let textColor = '#2563eb';
   if (pct <= 30) {
-    ringColor = '#ef4444';     // red — urgent
+    ringColor = '#ef4444'; // red
     textColor = '#dc2626';
   } else if (pct <= 60) {
-    ringColor = '#f59e0b';     // amber — getting tight
+    ringColor = '#f59e0b'; // amber
     textColor = '#d97706';
   }
 
   return (
-    <div className="flex flex-col items-center gap-1">
-      <div className="relative w-16 h-16">
+    <div className="flex flex-col items-center gap-0.5 shrink-0">
+      <div className="relative w-14 h-14 sm:w-16 sm:h-16">
         <svg className="w-full h-full" viewBox="0 0 60 60" aria-hidden="true">
-          {/* Track */}
-          <circle cx="30" cy="30" r={radius} fill="none" stroke="#e2e8f0" strokeWidth="4" />
-          {/* Countdown ring */}
+          {/* Background Track */}
+          <circle cx="30" cy="30" r={radius} fill="none" stroke="#e2e8f0" strokeWidth="4.5" />
+          {/* Animated Countdown Ring */}
           <circle
-            cx="30" cy="30" r={radius}
+            cx="30"
+            cy="30"
+            r={radius}
             fill="none"
             stroke={ringColor}
-            strokeWidth="4"
+            strokeWidth="4.5"
             strokeLinecap="round"
             strokeDasharray={circumference}
             strokeDashoffset={dashOffset}
-            className="timer-ring"
-            style={{ transformOrigin: '30px 30px', transform: 'rotate(-90deg)' }}
+            style={{
+              transformOrigin: '30px 30px',
+              transform: 'rotate(-90deg)',
+              transition: 'stroke-dashoffset 0.8s linear, stroke 0.3s ease',
+            }}
           />
         </svg>
-        {/* Number */}
+
+        {/* Seconds text */}
         <div
-          className="absolute inset-0 flex items-center justify-center font-black text-xl tabular-nums transition-colors duration-300"
+          className="absolute inset-0 flex items-center justify-center font-black text-lg sm:text-xl tabular-nums transition-colors duration-300"
           style={{ color: textColor }}
         >
           {timeLeft}
         </div>
       </div>
-      <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">sec</span>
+      <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">sec</span>
     </div>
   );
 }

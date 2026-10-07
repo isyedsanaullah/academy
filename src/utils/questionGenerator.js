@@ -1,8 +1,8 @@
 /**
  * questionGenerator.js
  *
- * Generates question sets for:
- * 1. Multiplication (General or single-table focus)
+ * Generates randomized question sets for:
+ * 1. Multiplication (General random or single-table focus)
  * 2. Addition
  * 3. Subtraction (Always non-negative results)
  * 4. Division (Clean division without remainders)
@@ -12,13 +12,13 @@
 
 import { GAME_TYPES } from '../data/gameConfigs.js';
 
+// In-place Fisher-Yates shuffle that returns the mutated array
 function shuffle(arr) {
-  const copy = [...arr];
-  for (let i = copy.length - 1; i > 0; i--) {
+  for (let i = arr.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
-    [copy[i], copy[j]] = [copy[j], copy[i]];
+    [arr[i], arr[j]] = [arr[j], arr[i]];
   }
-  return copy;
+  return arr;
 }
 
 // ─── Multiplication Distractors ──────────────────────────────────────────
@@ -129,47 +129,65 @@ export function generateQuestions(options = {}) {
   const difficultyId = options.difficultyId || 'medium';
   const tableNum = options.tableNum != null ? Number(options.tableNum) : null;
 
-  // 1. Single Table Focused Practice (e.g. Table 7: 7×0 to 7×10)
+  // 1. Single Table Focused Practice (e.g. Table 7: randomized 7×4, 7×8, 7×2, 7×9...)
   if (gameType === 'multiplication' && tableNum != null && !isNaN(tableNum)) {
-    const pairs = [];
-    for (let b = 0; b <= 10; b++) {
-      pairs.push([tableNum, b]);
-    }
-    shuffle(pairs);
+    // Generate multipliers 1 to 10 (plus 11, 12)
+    const multipliers = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
+    shuffle(multipliers);
+    const selected = multipliers.slice(0, 10);
 
-    return pairs.map(([a, b], idx) => {
+    return selected.map((b, idx) => {
+      const a = tableNum;
+      // Randomly swap operand display order for variety (7 × 4 or 4 × 7)
+      const swap = Math.random() > 0.5;
+      const displayA = swap ? b : a;
+      const displayB = swap ? a : b;
       const answer = a * b;
       const distractors = buildMultiplicationDistractors(a, b, answer);
       const optionsList = shuffle([answer, ...distractors]);
+
       return {
         id: `tbl-${a}-${b}-${idx}-${Date.now()}`,
         multiplier: a,
         multiplicand: b,
-        display: `${a} × ${b}`,
+        display: `${displayA} × ${displayB}`,
         answer,
         options: optionsList,
       };
     });
   }
 
-  // 2. Standard Multiplication Challenge
+  // 2. Standard Multiplication Challenge (Randomized tables, NEVER only 0s!)
   if (gameType === 'multiplication') {
-    const config = GAME_TYPES.multiplication.difficulties[difficultyId] || {
-      minTable: options.minTable ?? 0,
-      maxTable: options.maxTable ?? 10,
-      questions: options.questions ?? 15,
-    };
+    let minT = 2;
+    let maxT = 10;
+    let numQuestions = 15;
 
-    const minTable = config.minTable ?? 0;
-    const maxTable = config.maxTable ?? 10;
-    const numQuestions = config.questions || 15;
+    if (difficultyId === 'easy') {
+      minT = 2;
+      maxT = 5;
+      numQuestions = 10;
+    } else if (difficultyId === 'hard') {
+      minT = 2;
+      maxT = 12;
+      numQuestions = 20;
+    }
 
     const allPairs = [];
-    for (let a = minTable; a <= maxTable; a++) {
-      for (let b = 0; b <= 10; b++) {
+    for (let a = minT; a <= maxT; a++) {
+      for (let b = 1; b <= 10; b++) {
         allPairs.push([a, b]);
       }
     }
+    // Also add a couple of 10-table or 11/12 facts
+    if (difficultyId !== 'easy') {
+      for (let a = 2; a <= maxT; a++) {
+        allPairs.push([a, 11]);
+        allPairs.push([a, 12]);
+      }
+    }
+
+    // Scramble the pairs thoroughly
     shuffle(allPairs);
 
     const usedKeys = new Set();
@@ -181,6 +199,10 @@ export function generateQuestions(options = {}) {
       if (usedKeys.has(key)) continue;
       usedKeys.add(key);
 
+      const swap = Math.random() > 0.5;
+      const displayA = swap ? b : a;
+      const displayB = swap ? a : b;
+
       const answer = a * b;
       const distractors = buildMultiplicationDistractors(a, b, answer);
       const optionsList = shuffle([answer, ...distractors]);
@@ -189,7 +211,7 @@ export function generateQuestions(options = {}) {
         id: `mul-${a}-${b}-${questions.length}-${Date.now()}`,
         multiplier: a,
         multiplicand: b,
-        display: `${a} × ${b}`,
+        display: `${displayA} × ${displayB}`,
         answer,
         options: optionsList,
       });
@@ -208,15 +230,15 @@ export function generateQuestions(options = {}) {
     while (questions.length < numQuestions) {
       let a, b;
       if (difficultyId === 'easy') {
-        a = Math.floor(Math.random() * 9) + 1; // 1-9
-        b = Math.floor(Math.random() * 9) + 1; // 1-9
+        a = Math.floor(Math.random() * 9) + 2; // 2-10
+        b = Math.floor(Math.random() * 9) + 2; // 2-10
       } else if (difficultyId === 'hard') {
         a = Math.floor(Math.random() * 200) + 50; // 50-249
         b = Math.floor(Math.random() * 200) + 25; // 25-224
       } else {
         // medium
-        a = Math.floor(Math.random() * 45) + 10; // 10-54
-        b = Math.floor(Math.random() * 45) + 10; // 10-54
+        a = Math.floor(Math.random() * 45) + 12; // 12-56
+        b = Math.floor(Math.random() * 45) + 12; // 12-56
       }
 
       const key = `${a}+${b}`;
@@ -250,11 +272,11 @@ export function generateQuestions(options = {}) {
     while (questions.length < numQuestions) {
       let a, b;
       if (difficultyId === 'easy') {
-        a = Math.floor(Math.random() * 15) + 5; // 5-19
-        b = Math.floor(Math.random() * a) + 1; // 1 to a
+        a = Math.floor(Math.random() * 15) + 6; // 6-20
+        b = Math.floor(Math.random() * (a - 2)) + 2; // 2 to a-1
       } else if (difficultyId === 'hard') {
         a = Math.floor(Math.random() * 300) + 100; // 100-399
-        b = Math.floor(Math.random() * (a - 20)) + 15; // 15 to a-20
+        b = Math.floor(Math.random() * (a - 30)) + 25; // 25 to a-30
       } else {
         // medium
         a = Math.floor(Math.random() * 70) + 25; // 25-94
