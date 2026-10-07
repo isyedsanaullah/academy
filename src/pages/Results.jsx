@@ -48,7 +48,7 @@ export default function Results() {
 
         <div className="card p-4 bg-slate-50 text-center space-y-1">
           <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Powered by</p>
-          <p className="text-sm font-black text-slate-700">Math Practice App</p>
+          <p className="text-sm font-black text-slate-700">Syeds Academy</p>
         </div>
       </div>
     );
