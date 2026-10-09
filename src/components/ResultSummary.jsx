@@ -281,7 +281,11 @@ export default function ResultSummary({ result, isSharedView = false, onNavigate
               return (
                 <div key={i} className="flex items-center gap-3 py-1.5 border-b border-slate-50 last:border-0">
                   <span className="text-base w-5 flex-shrink-0 text-center">{icon}</span>
-                  <span className="font-bold text-slate-700 tabular-nums">{ans.questionObj?.display} = {ans.expectedAnswer}</span>
+                  <span className="font-bold text-slate-700 tabular-nums">
+                    {ans.questionObj?.display && ans.questionObj?.display !== ans.expectedAnswer
+                      ? `${ans.questionObj.display} = ${ans.expectedAnswer}`
+                      : ans.expectedAnswer}
+                  </span>
                   <span className="text-xs text-slate-400 ml-auto text-right leading-tight flex-shrink-0">{detail}</span>
                 </div>
               );

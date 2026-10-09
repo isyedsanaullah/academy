@@ -7,6 +7,7 @@ import Games from './pages/Games.jsx';
 import TablesPractice from './pages/TablesPractice.jsx';
 import WrittenMath from './pages/WrittenMath.jsx';
 import Results from './pages/Results.jsx';
+import FractionsPractice from './pages/FractionsPractice.jsx';
 
 export default function App() {
   return (
@@ -14,14 +15,15 @@ export default function App() {
       <Header />
       <main className="flex-1 w-full overflow-x-hidden">
         <Routes>
-          <Route path="/"             element={<Home />}           />
-          <Route path="/tables"       element={<Tables />}         />
-          <Route path="/games"        element={<Games />}          />
-          <Route path="/practice"     element={<TablesPractice />} />
-          <Route path="/written-math" element={<WrittenMath />}    />
-          <Route path="/results"      element={<Results />}        />
+          <Route path="/"               element={<Home />}             />
+          <Route path="/tables"         element={<Tables />}           />
+          <Route path="/games"          element={<Games />}            />
+          <Route path="/practice"       element={<TablesPractice />}   />
+          <Route path="/written-math"   element={<WrittenMath />}      />
+          <Route path="/results"        element={<Results />}          />
+          <Route path="/fractions"      element={<FractionsPractice />} />
           {/* Catch-all fallback → Home */}
-          <Route path="*"             element={<Home />}           />
+          <Route path="*"               element={<Home />}             />
         </Routes>
       </main>
       <Footer />

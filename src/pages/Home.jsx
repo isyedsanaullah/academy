@@ -88,7 +88,7 @@ export default function Home() {
           </button>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
           <div
             onClick={() => navigate('/tables')}
             className="card p-4 border border-slate-200 hover:border-blue-300 hover:shadow-md cursor-pointer transition-all space-y-2"
@@ -99,6 +99,18 @@ export default function Home() {
             <h3 className="font-black text-slate-800 text-base">Tables 1–10</h3>
             <p className="text-xs text-slate-500">Read and memorize individual multiplication tables.</p>
             <span className="inline-block text-xs font-bold text-blue-600">Read & Practice →</span>
+          </div>
+
+          <div
+            onClick={() => navigate('/fractions')}
+            className="card p-4 border border-slate-200 hover:border-purple-300 hover:shadow-md cursor-pointer transition-all space-y-2"
+          >
+            <div className="w-9 h-9 rounded-xl bg-purple-100 text-purple-700 flex items-center justify-center font-black text-lg">
+              🥧
+            </div>
+            <h3 className="font-black text-slate-800 text-base">Visual Fractions</h3>
+            <p className="text-xs text-slate-500">Interactive shapes and pizza slices to master fractions.</p>
+            <span className="inline-block text-xs font-bold text-purple-600">Play Fractions →</span>
           </div>
 
           <div

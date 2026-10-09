@@ -56,6 +56,18 @@ export default function Games() {
       action: () => navigate('/practice', { state: { gameType: 'division' } }),
     },
     {
+      id: 'fractions',
+      title: 'Visual Fractions Challenge',
+      symbol: '🥧',
+      color: 'bg-fuchsia-600',
+      lightColor: 'bg-fuchsia-50 text-fuchsia-700 border-fuchsia-200',
+      description: 'See it. Understand it. Master fractions through colorful shapes — circles, pizzas, rectangles, grids.',
+      grade: 'Class 3–6',
+      badge: 'Available',
+      status: 'active',
+      action: () => navigate('/fractions'),
+    },
+    {
       id: 'written-multiplication',
       title: 'Written Multiplication',
       symbol: '📝',
@@ -82,15 +94,6 @@ export default function Games() {
   ];
 
   const comingSoonGames = [
-    {
-      id: 'fractions',
-      title: 'Fraction Practice',
-      symbol: '🥧',
-      description: 'Identifying, comparing, and adding simple fractions.',
-      grade: 'Class 4–6',
-      badge: 'Coming Soon',
-      status: 'soon',
-    },
     {
       id: 'fraction-division',
       title: 'Fraction Division',

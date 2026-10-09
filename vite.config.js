@@ -11,7 +11,7 @@ function renderSpaFallbackPlugin() {
   return {
     name: 'render-spa-fallback',
     closeBundle() {
-      const distDir = path.resolve(__dirname, 'dist')
+      const distDir       = path.resolve(__dirname, 'dist')
       const indexHtmlPath = path.resolve(distDir, 'index.html')
       if (fs.existsSync(indexHtmlPath)) {
         const indexHtml = fs.readFileSync(indexHtmlPath, 'utf-8')
@@ -20,8 +20,15 @@ function renderSpaFallbackPlugin() {
         fs.writeFileSync(path.resolve(distDir, '404.html'), indexHtml)
 
         // 2. Pre-create index.html in every known SPA route folder
-        // This ensures Render Static Site web server directly serves the route with 200 OK
-        const routes = ['tables', 'games', 'practice', 'results', 'written-math']
+        //    This ensures Render Static Site web server directly serves the route with 200 OK
+        const routes = [
+          'tables',
+          'games',
+          'practice',
+          'results',
+          'written-math',
+          'fractions',       // Visual Fractions Challenge
+        ]
         routes.forEach(route => {
           const routeDir = path.resolve(distDir, route)
           if (!fs.existsSync(routeDir)) {
